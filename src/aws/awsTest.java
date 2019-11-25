@@ -63,7 +63,7 @@ public class awsTest {
 			System.out.println(" 7. reboot instance 8. list images ");
 			System.out.println(" 99. quit ");
 			System.out.println("------------------------------------------------------------");
-			System.out.print("Enter an integer: ");
+			System.out.print("Enter an integer:");
 
 			number = menu.nextInt();
 
