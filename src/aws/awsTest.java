@@ -22,33 +22,34 @@ import com.amazonaws.services.ec2.model.RebootInstancesResult;
 public class awsTest {
 
 	static AmazonEC2 ec2;
-	
+
 	private static void init() throws Exception {
-		
+
 		ProfileCredentialsProvider credentialsProvider = new ProfileCredentialsProvider();
 		try {
 			credentialsProvider.getCredentials();
 		} catch (Exception e) {
-			throw new AmazonClientException(
-			"Cannot load the credentials from the credential profiles file. " +
-			"Please make sure that your credentials file is at the correct " +
-			"location (~/.aws/credentials), and is in valid format.",
-			e);
+			throw new AmazonClientException("Cannot load the credentials from the credential profiles file. "
+					+ "Please make sure that your credentials file is at the correct "
+					+ "location (~/.aws/credentials), and is in valid format.", e);
 
 		}
-		ec2 = AmazonEC2ClientBuilder.standard()
-		.withCredentials(credentialsProvider)
-		.withRegion("us-east-1") /* check the region at AWS console */
-		.build();
+		ec2 = AmazonEC2ClientBuilder
+				.standard()
+				.withCredentials(credentialsProvider)
+				.withRegion("us-east-1")
+				.build();
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		init();
 		Scanner menu = new Scanner(System.in);
 		Scanner id_string = new Scanner(System.in);
+		
 		int number = 0;
-		while(true)
-		{
+		String ins_id;
+		
+		while (true) {
 			System.out.println(" ");
 			System.out.println(" ");
 			System.out.println("------------------------------------------------------------");
@@ -72,21 +73,26 @@ public class awsTest {
 				listInstances();
 				break;
 			case 2:
-				System.out.println("1 ");
 				break;
 			case 3:
-				startInstance("i-06f6c89b3c9293fe7");
+				System.out.print("Input your instance ID that you want to starting : ");
+				ins_id = id_string.nextLine();
+				startInstance(ins_id);
 				break;
 			case 4:
 
 				break;
 			case 5:
-				stopInstance("i-06f6c89b3c9293fe7");
+				System.out.print("Input your instance ID that you want to stoping : ");
+				ins_id = id_string.nextLine();
+				stopInstance(ins_id);
 				break;
 			case 6:
 				break;
 			case 7:
-				RebootInstance("i-06f6c89b3c9293fe7");
+				System.out.print("Input your instance ID that you want to reboot : ");
+				ins_id = id_string.nextLine();
+				RebootInstance(ins_id);
 				break;
 			case 8:
 
@@ -98,118 +104,97 @@ public class awsTest {
 		}
 
 	}
-	
-	public static void listInstances()
-	{
+
+	// #1 show instance list
+	public static void listInstances() {
 		System.out.println("Listing instances....");
 		boolean done = false;
-	
+
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
-		while(!done) {
-				DescribeInstancesResult response = ec2.describeInstances(request);
-					for(Reservation reservation : response.getReservations()) {
-						for(Instance instance : reservation.getInstances()) {
-							System.out.printf(
-									"[id] %s, " +
-									"[AMI] %s, " +
-									"[type] %s, " +
-									"[state] %10s, " +
-									"[monitoring state] %s",
-									instance.getInstanceId(),
-									instance.getImageId(),
-									instance.getInstanceType(),
-									instance.getState().getName(),
-									instance.getMonitoring().getState());
-						}
-						System.out.println();
-					}
+		while (!done) {
+			DescribeInstancesResult response = ec2.describeInstances(request);
+			for (Reservation reservation : response.getReservations()) {
+				for (Instance instance : reservation.getInstances()) {
+					System.out.printf(
+							"[id] %s, " + "[AMI] %s, " + "[type] %s, " + "[state] %10s, " + "[monitoring state] %s",
+							instance.getInstanceId(), instance.getImageId(), instance.getInstanceType(),
+							instance.getState().getName(), instance.getMonitoring().getState());
+				}
+				System.out.println();
+			}
 			request.setNextToken(response.getNextToken());
-	
-			if(response.getNextToken() == null) {
+
+			if (response.getNextToken() == null) {
 				done = true;
 			}
-	
+
 		}
 
-
 	}
-	
-	
-	    public static void startInstance(String instance_id)
-	    {
-	 
-	        DryRunSupportedRequest<StartInstancesRequest> dry_request =
-	            () -> {
-	            StartInstancesRequest request = new StartInstancesRequest()
-	                .withInstanceIds(instance_id);
 
-	            return request.getDryRunRequest();
-	        };
+	// #3 start instance using instance_id
+	public static void startInstance(String instance_id) {
 
-	        DryRunResult dry_response = ec2.dryRun(dry_request);
+		DryRunSupportedRequest<StartInstancesRequest> dry_request = () -> {
+			StartInstancesRequest request = new StartInstancesRequest().withInstanceIds(instance_id);
 
-	        if(!dry_response.isSuccessful()) {
-	            System.out.printf(
-	                "Failed dry run to start instance %s", instance_id);
+			return request.getDryRunRequest();
+		};
 
-	            throw dry_response.getDryRunResponse();
-	        }
+		DryRunResult dry_response = ec2.dryRun(dry_request);
 
-	        StartInstancesRequest request = new StartInstancesRequest()
-	            .withInstanceIds(instance_id);
+		if (!dry_response.isSuccessful()) {
+			System.out.printf("Failed dry run to start instance %s", instance_id);
 
-	        ec2.startInstances(request);
+			throw dry_response.getDryRunResponse();
+		}
 
-	        System.out.printf("Successfully started instance %s", instance_id);
-	    }
+		StartInstancesRequest request = new StartInstancesRequest().withInstanceIds(instance_id);
 
-	    public static void stopInstance(String instance_id)
-	    {
-	     
-	        DryRunSupportedRequest<StopInstancesRequest> dry_request =
-	            () -> {
-	            StopInstancesRequest request = new StopInstancesRequest()
-	                .withInstanceIds(instance_id);
+		ec2.startInstances(request);
 
-	            return request.getDryRunRequest();
-	        };
+		System.out.printf("Successfully started instance %s", instance_id);
+	}
 
-	        DryRunResult dry_response = ec2.dryRun(dry_request);
+	// #5stop instance using instance id
+	public static void stopInstance(String instance_id) {
 
-	        if(!dry_response.isSuccessful()) {
-	            System.out.printf(
-	                "Failed dry run to stop instance %s", instance_id);
-	            throw dry_response.getDryRunResponse();
-	        }
+		DryRunSupportedRequest<StopInstancesRequest> dry_request = () -> {
+			StopInstancesRequest request = new StopInstancesRequest().withInstanceIds(instance_id);
 
-	        StopInstancesRequest request = new StopInstancesRequest()
-	            .withInstanceIds(instance_id);
+			return request.getDryRunRequest();
+		};
 
-	        ec2.stopInstances(request);
+		DryRunResult dry_response = ec2.dryRun(dry_request);
 
-	        System.out.printf("Successfully stop instance %s", instance_id);
-	    }
-	    
-	    public static void RebootInstance(String input_id)
-	    {
-	            final String USAGE =
-	                "To run this example, supply an instance id\n" +
-	                "Ex: RebootInstance <instance_id>\n";
+		if (!dry_response.isSuccessful()) {
+			System.out.printf("Failed dry run to stop instance %s", instance_id);
+			throw dry_response.getDryRunResponse();
+		}
 
-	            if (input_id.length() == 0) {
-	                System.out.println(USAGE);
-	                System.exit(1);
-	            }
+		StopInstancesRequest request = new StopInstancesRequest().withInstanceIds(instance_id);
 
-	            String instance_id = input_id;
+		ec2.stopInstances(request);
 
-	            RebootInstancesRequest request = new RebootInstancesRequest()
-	                .withInstanceIds(instance_id);
+		System.out.printf("Successfully stop instance %s", instance_id);
+	}
 
-	            RebootInstancesResult response = ec2.rebootInstances(request);
+	// #7 reboot instance id using instance id
+	public static void RebootInstance(String input_id) {
+		final String USAGE = "To run this example, supply an instance id\n" + "Ex: RebootInstance <instance_id>\n";
 
-	            System.out.printf(
-	                "Successfully rebooted instance %s", instance_id);
-	     }
-	
+		if (input_id.length() == 0) {
+			System.out.println(USAGE);
+			System.exit(1);
+		}
+
+		String instance_id = input_id;
+
+		RebootInstancesRequest request = new RebootInstancesRequest().withInstanceIds(instance_id);
+
+		RebootInstancesResult response = ec2.rebootInstances(request);
+
+		System.out.printf("Successfully rebooted instance %s", instance_id);
+	}
+
 }
