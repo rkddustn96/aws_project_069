@@ -6,6 +6,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
@@ -26,6 +27,13 @@ import com.amazonaws.services.ec2.model.DescribeAvailabilityZonesResult;
 
 import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
 import com.amazonaws.services.ec2.model.KeyPairInfo;
+
+import com.amazonaws.services.ec2.model.InstanceType;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateTagsResult;
 
 public class awsTest {
 
@@ -95,6 +103,18 @@ public class awsTest {
 				stopInstance(ins_id);
 				break;
 			case 6:
+				System.out.print("\n Please wright your img Name and ID that you want to using for create new instance \n"
+						+ "[IAM name] : ");
+				String Iam_name = id_string.nextLine();
+				
+				System.out.print("[IAM id] : ");
+				String Iam_id = id_string.nextLine();
+				
+				System.out.print("\n Please wright your key-pair name \n"
+						+ "[key-pair name] : ");
+				String key_name = id_string.nextLine();
+				
+				CreateInstance(Iam_id, key_name);
 				break;
 			case 7:
 				listInstances();
@@ -240,6 +260,22 @@ public class awsTest {
 					key_pair.getKeyFingerprint());
 		}
 
+	}
+
+	// #6 Create Instance
+	public static void CreateInstance(String ami_idd, String key_n) {
+
+		String ami_id = ami_idd;
+
+		RunInstancesRequest run_request = new RunInstancesRequest().withImageId(ami_id)
+				.withInstanceType(InstanceType.T2Micro).withMaxCount(1).withMinCount(1)
+				.withKeyName(key_n);
+
+		RunInstancesResult run_response = ec2.runInstances(run_request);
+
+		String reservation_id = run_response.getReservation().getInstances().get(0).getInstanceId();
+
+		System.out.printf("Successfully started EC2 instance %s based on AMI %s with %s key-pair", reservation_id, ami_id, key_n);
 	}
 
 }
