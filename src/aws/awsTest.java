@@ -1,5 +1,6 @@
 package aws;
 
+import java.util.List;
 import java.util.Scanner;
 
 import com.amazonaws.AmazonClientException;
@@ -32,8 +33,13 @@ import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateTagsResult;
+
+import com.amazonaws.services.ec2.model.Image;
+import com.amazonaws.services.ec2.model.DescribeImagesRequest;
+import com.amazonaws.services.ec2.model.DescribeImagesResult;
 
 public class awsTest {
 
@@ -64,6 +70,7 @@ public class awsTest {
 		while (true) {
 			System.out.println(" ");
 			System.out.println(" ");
+			System.out.println("2015041069 CBNU SOFTWARE COLOM CLOUDCOMPUTING TEAM PROJECT ");
 			System.out.println("------------------------------------------------------------");
 			System.out.println(" Amazon AWS Control Panel using SDK ");
 			System.out.println(" ");
@@ -74,7 +81,9 @@ public class awsTest {
 			System.out.println(" 3. start instance 4. available regions ");
 			System.out.println(" 5. stop instance 6. create instance ");
 			System.out.println(" 7. reboot instance 8. list images ");
-			System.out.println(" 9. key pair list 99. quit ");
+			System.out.println("---------additional function------------------");
+			System.out.println(" 9. key pair list 10. delete instance ");
+			System.out.println(" 99. exit program");
 			System.out.println("------------------------------------------------------------");
 			System.out.print("Enter an integer:");
 
@@ -103,17 +112,14 @@ public class awsTest {
 				stopInstance(ins_id);
 				break;
 			case 6:
-				System.out.print("\n Please wright your img Name and ID that you want to using for create new instance \n"
-						+ "[IAM name] : ");
-				String Iam_name = id_string.nextLine();
-				
-				System.out.print("[IAM id] : ");
+				System.out.print(
+						"\n Please wright your img Name and ID that you want to using for create new instance \n");
+				System.out.print("[AMI id] : ");
 				String Iam_id = id_string.nextLine();
-				
-				System.out.print("\n Please wright your key-pair name \n"
-						+ "[key-pair name] : ");
+
+				System.out.print("\n Please wright your key-pair name \n" + "[key-pair name] : ");
 				String key_name = id_string.nextLine();
-				
+
 				CreateInstance(Iam_id, key_name);
 				break;
 			case 7:
@@ -123,13 +129,16 @@ public class awsTest {
 				RebootInstance(ins_id);
 				break;
 			case 8:
-
+				ImageList();
 				break;
 			case 9:
 				DescribeKeyPairs();
 				break;
+			case 10:
+				DeleteInstance();
+				break;
 			case 99:
-
+				System.exit(0);
 				break;
 			}
 		}
@@ -226,8 +235,8 @@ public class awsTest {
 
 		System.out.printf("Successfully rebooted instance %s", instance_id);
 	}
-	// #2 show available zone list
 
+	// #2 show available zone list
 	public static void DescribeZones() {
 
 		DescribeAvailabilityZonesResult zones_response = ec2.describeAvailabilityZones();
@@ -250,6 +259,49 @@ public class awsTest {
 
 	}
 
+	// #6 Create Instance
+	public static void CreateInstance(String ami_idd, String key_n) {
+
+		String ami_id = ami_idd;
+
+		if (key_n.equals("")) {
+			RunInstancesRequest run_request = new RunInstancesRequest().withImageId(ami_id)
+					.withInstanceType(InstanceType.T2Micro).withMaxCount(1).withMinCount(1);
+			RunInstancesResult run_response = ec2.runInstances(run_request);
+
+			String reservation_id = run_response.getReservation().getInstances().get(0).getInstanceId();
+
+			System.out.printf("Successfully started EC2 instance %s based on AMI %s "
+					, reservation_id, ami_id);
+		}
+		else {
+			RunInstancesRequest run_request = new RunInstancesRequest().withImageId(ami_id)
+					.withInstanceType(InstanceType.T2Micro).withMaxCount(1).withMinCount(1).withKeyName(key_n);
+			RunInstancesResult run_response = ec2.runInstances(run_request);
+
+			String reservation_id = run_response.getReservation().getInstances().get(0).getInstanceId();
+
+			System.out.printf("Successfully started EC2 instance %s based on AMI %s with %s key-pair", reservation_id,
+					ami_id, key_n);
+		}
+	}
+
+	// #8 list images
+	public static void ImageList() {
+
+		System.out.println("Listing AMI....");
+
+		DescribeImagesRequest request = new DescribeImagesRequest().withOwners("self");
+
+		DescribeImagesResult iresponse = ec2.describeImages(request);
+
+		for (Image Im : iresponse.getImages()) {
+			System.out.printf("[AMIid] %s, [AMI Status] %s, [AMIname] %s \n", Im.getImageId(), Im.getState(),
+					Im.getName());
+		}
+
+	}
+
 	// #9 show key pair list
 	public static void DescribeKeyPairs() {
 
@@ -262,20 +314,18 @@ public class awsTest {
 
 	}
 
-	// #6 Create Instance
-	public static void CreateInstance(String ami_idd, String key_n) {
+	// #10 delete instance
+	public static void DeleteInstance() {
 
-		String ami_id = ami_idd;
+		Scanner inputdata = new Scanner(System.in);
 
-		RunInstancesRequest run_request = new RunInstancesRequest().withImageId(ami_id)
-				.withInstanceType(InstanceType.T2Micro).withMaxCount(1).withMinCount(1)
-				.withKeyName(key_n);
+		System.out.printf("Enter the Instance ID :");
+		String delete_ins = inputdata.nextLine();
+		System.out.println("Delete Instance " + delete_ins + ".......\n");
 
-		RunInstancesResult run_response = ec2.runInstances(run_request);
+		TerminateInstancesRequest ter = new TerminateInstancesRequest().withInstanceIds(delete_ins);
 
-		String reservation_id = run_response.getReservation().getInstances().get(0).getInstanceId();
-
-		System.out.printf("Successfully started EC2 instance %s based on AMI %s with %s key-pair", reservation_id, ami_id, key_n);
+		ec2.terminateInstances(ter);
 	}
 
 }
