@@ -70,7 +70,7 @@ public class awsTest {
 		while (true) {
 			System.out.println(" ");
 			System.out.println(" ");
-			System.out.println("2015041069 CBNU SOFTWARE COLOM CLOUDCOMPUTING TEAM PROJECT ");
+			System.out.println("2015041069 CBNU SOFTWARE, CLOUDCOMPUTING TEAM PROJECT ");
 			System.out.println("------------------------------------------------------------");
 			System.out.println(" Amazon AWS Control Panel using SDK ");
 			System.out.println(" ");
