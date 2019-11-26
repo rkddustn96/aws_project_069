@@ -19,6 +19,14 @@ import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.RebootInstancesRequest;
 import com.amazonaws.services.ec2.model.RebootInstancesResult;
 
+import com.amazonaws.services.ec2.model.DescribeRegionsResult;
+import com.amazonaws.services.ec2.model.Region;
+import com.amazonaws.services.ec2.model.AvailabilityZone;
+import com.amazonaws.services.ec2.model.DescribeAvailabilityZonesResult;
+
+import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
+import com.amazonaws.services.ec2.model.KeyPairInfo;
+
 public class awsTest {
 
 	static AmazonEC2 ec2;
@@ -34,21 +42,17 @@ public class awsTest {
 					+ "location (~/.aws/credentials), and is in valid format.", e);
 
 		}
-		ec2 = AmazonEC2ClientBuilder
-				.standard()
-				.withCredentials(credentialsProvider)
-				.withRegion("us-east-1")
-				.build();
+		ec2 = AmazonEC2ClientBuilder.standard().withCredentials(credentialsProvider).withRegion("us-east-1").build();
 	}
 
 	public static void main(String[] args) throws Exception {
 		init();
 		Scanner menu = new Scanner(System.in);
 		Scanner id_string = new Scanner(System.in);
-		
+
 		int number = 0;
 		String ins_id;
-		
+
 		while (true) {
 			System.out.println(" ");
 			System.out.println(" ");
@@ -62,7 +66,7 @@ public class awsTest {
 			System.out.println(" 3. start instance 4. available regions ");
 			System.out.println(" 5. stop instance 6. create instance ");
 			System.out.println(" 7. reboot instance 8. list images ");
-			System.out.println(" 99. quit ");
+			System.out.println(" 9. key pair list 99. quit ");
 			System.out.println("------------------------------------------------------------");
 			System.out.print("Enter an integer:");
 
@@ -73,29 +77,36 @@ public class awsTest {
 				listInstances();
 				break;
 			case 2:
+				DescribeZones();
 				break;
 			case 3:
-				System.out.print("Input your instance ID that you want to starting : ");
+				listInstances();
+				System.out.print("\n Please select and wright your instance ID that you want to starting : ");
 				ins_id = id_string.nextLine();
 				startInstance(ins_id);
 				break;
 			case 4:
-
+				DescribeRegions();
 				break;
 			case 5:
-				System.out.print("Input your instance ID that you want to stoping : ");
+				listInstances();
+				System.out.print("\n Please select and wright your instance ID that you want to stoping : ");
 				ins_id = id_string.nextLine();
 				stopInstance(ins_id);
 				break;
 			case 6:
 				break;
 			case 7:
-				System.out.print("Input your instance ID that you want to reboot : ");
+				listInstances();
+				System.out.print("\n Please select and wright your instance ID that you want to reboot : ");
 				ins_id = id_string.nextLine();
 				RebootInstance(ins_id);
 				break;
 			case 8:
 
+				break;
+			case 9:
+				DescribeKeyPairs();
 				break;
 			case 99:
 
@@ -181,10 +192,9 @@ public class awsTest {
 
 	// #7 reboot instance id using instance id
 	public static void RebootInstance(String input_id) {
-		final String USAGE = "To run this example, supply an instance id\n" + "Ex: RebootInstance <instance_id>\n";
 
 		if (input_id.length() == 0) {
-			System.out.println(USAGE);
+			System.out.println("not found instance");
 			System.exit(1);
 		}
 
@@ -195,6 +205,41 @@ public class awsTest {
 		RebootInstancesResult response = ec2.rebootInstances(request);
 
 		System.out.printf("Successfully rebooted instance %s", instance_id);
+	}
+	// #2 show available zone list
+
+	public static void DescribeZones() {
+
+		DescribeAvailabilityZonesResult zones_response = ec2.describeAvailabilityZones();
+
+		for (AvailabilityZone zone : zones_response.getAvailabilityZones()) {
+			System.out.printf(" [availability zone] %s " + " [status] %s " + " [region] %s \n", zone.getZoneName(),
+					zone.getState(), zone.getRegionName());
+		}
+
+	}
+
+	// #4 show available region list
+	public static void DescribeRegions() {
+
+		DescribeRegionsResult regions_response = ec2.describeRegions();
+
+		for (Region region : regions_response.getRegions()) {
+			System.out.printf(" [region] %s " + " [endpoint] %s \n", region.getRegionName(), region.getEndpoint());
+		}
+
+	}
+
+	// #9 show key pair list
+	public static void DescribeKeyPairs() {
+
+		DescribeKeyPairsResult response = ec2.describeKeyPairs();
+
+		for (KeyPairInfo key_pair : response.getKeyPairs()) {
+			System.out.printf("[name] %s " + " [fingerprint] %s \n", key_pair.getKeyName(),
+					key_pair.getKeyFingerprint());
+		}
+
 	}
 
 }
